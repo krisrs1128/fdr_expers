@@ -11,9 +11,9 @@ class Generator(nn.Module):
         self.J = J
         self.layers = nn.Sequential(
             nn.Linear(K, H),
-            nn.ReLU,
+            nn.ReLU(),
             nn.Linear(H, H),
-            nn.ReLU,
+            nn.ReLU(),
             nn.Linear(H, J)
         )
 
@@ -27,9 +27,9 @@ class Discriminator(nn.Module):
         self.J = J
         self.layers = nn.Sequential(
             nn.Linear(J, H),
-            nn.ReLU,
+            nn.ReLU(),
             nn.Linear(H, H),
-            nn.ReLU,
+            nn.ReLU(),
             nn.Linear(H, 1)
         )
 
