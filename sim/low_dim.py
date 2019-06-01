@@ -3,12 +3,6 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-n = 1024 * 10
-p = 10
-z = np.random.normal(size=(n, 1))
-
-f1 = lambda x: x ** 2 + 2 * x
-f2 = lambda x: x ** 3 - x
 
 def poly(coefs):
     def f(x):
@@ -18,11 +12,13 @@ def poly(coefs):
         return result
     return f
 
+
 def add_noise(f, sigma=0.8):
     def g(x):
         n = x.shape[0]
         return f(x) + np.random.normal(0, sigma, (n, 1))
     return g
+
 
 class XSim(Dataset):
     def __init__(self, x):
