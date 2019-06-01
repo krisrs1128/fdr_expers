@@ -6,7 +6,7 @@ def train(iterator, optimizers, models, loss_fun, device=None):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     dim_z = models["G"].layers[0].in_features
-    losses = np.zeros((len(iterator.dataset), 3))
+    losses = np.zeros((len(iterator), 3))
 
 
     for i, data in enumerate(iterator):
@@ -20,6 +20,7 @@ def train(iterator, optimizers, models, loss_fun, device=None):
 
         # train with fake
         z = torch.randn(iterator.batch_size, dim_z, device=device)
+        z = torch.randn(1000, dim_z, device=device)
         x_tilde = models["G"](z)
         losses[i][1] = loss_backward(models["D"], loss_fun, x_tilde.detach(), y.fill_(0))
         optimizers["D"].step()
