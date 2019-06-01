@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #  MIT License
 
 # Copyright (c) Facebook, Inc. and its affiliates.
@@ -33,14 +34,14 @@ class Extragradient(Optimizer):
         defaults: (dict): a dict containing default values of optimization
             options (used when a parameter group doesn"t specify them).
     """
-    def __init__(self, params):
-        super(Extragradient, self).__init__(params)
+    def __init__(self, params, defaults):
+        super(Extragradient, self).__init__(params, defaults)
         self.params_copy = []
 
     def update(self, p, group):
         raise NotImplementedError
 
-    def extrapolation(self):
+    def extrapolate(self):
         """Performs the extrapolation step and save a copy of the current
           parameters for the update step.
         """
@@ -72,19 +73,16 @@ class ExtraSGD(Extragradient):
     """Implements stochastic gradient descent with extrapolation step (optionally with momentum).
     Nesterov momentum is based on the formula from
     """
-    def __init__(self,
-                 params,
-                 lr,
-                 weight_decay=0):
-        super(ExtraSGD, self).__init__(params)
+    def __init__(self, params, lr, weight_decay=0):
         defaults = {
             "lr": lr,
             "weight_decay": weight_decay
         }
+        super(ExtraSGD, self).__init__(params, defaults)
 
     def update(self, param, group):
         grad = param.grad.data
-        if weight_decay != 0:
+        if group["weight_decay"]:
             grad += group["weight_decay"] * param.data
 
         return -group["lr"] * grad
