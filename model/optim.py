@@ -26,6 +26,7 @@
 import torch
 from torch.optim import Optimizer, SGD
 
+
 class Extragradient(Optimizer):
     """Base class for optimizers with extrapolation step.
         Arguments:
@@ -48,21 +49,21 @@ class Extragradient(Optimizer):
         # Check if a copy of the parameters was already made.
         is_empty = len(self.params_copy) == 0
         for group in self.param_groups:
-            for p in group["params"]:
-                u = self.update(p, group)
+            for param in group["params"]:
+                u = self.update(param, group)
                 if is_empty:
-                    self.params_copy.append(p.data.clone())
+                    self.params_copy.append(param.data.clone()) # save w[t]
 
-                p.data.add_(u)
+                param.data += u # w[t + .5] = w[t] - eta * F(w[t])
 
     def step(self):
         """Performs a single optimization step.
         """
         i = 0
         for group in self.param_groups:
-            for p in group["params"]:
-                u = self.update(p, group)
-                p.data = self.params_copy[i].add_(u)
+            for param in group["params"]:
+                u = self.update(param, group)
+                param.data = self.params_copy[i] + u # w[t + 1] = w[t] - eta * F(w[t + .5])
                 i += 1
 
         # Free the old parameters
