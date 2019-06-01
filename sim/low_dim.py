@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-
 import numpy as np
+import torch
+from torch.utils.data import Dataset
 
-n = 1000
+n = 1024 * 10
 p = 10
 z = np.random.normal(size=(n, 1))
 
@@ -23,6 +24,14 @@ def add_noise(f, sigma=0.8):
         return f(x) + np.random.normal(0, sigma, (n, 1))
     return g
 
-f1 = add_noise(poly([2, -2, 1]))
-f2 = add_noise(poly([-1, 0, 1, 0.1]))
-x = np.hstack([z, f1(z), f2(z), np.random.normal(size=(n, 5))])
+class XSim(Dataset):
+    def __init__(self, x):
+        super(XSim, self).__init__()
+        self.x = torch.Tensor(x).float()
+        self.J = x.shape[1]
+
+    def __getitem__(self, ix):
+        return self.x[ix, :]
+
+    def __len__(self):
+        return self.x.shape[0]
