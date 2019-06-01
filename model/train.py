@@ -6,7 +6,7 @@ def train(iterator, optimizers, models, loss_fun, device=None):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     dim_z = models["G"].layers[0].in_features
-    losses = np.zeros((len(iterator), 3))
+    losses = []
 
     models["G"].zero_grad()
     models["D"].zero_grad()
@@ -17,24 +17,25 @@ def train(iterator, optimizers, models, loss_fun, device=None):
         ###########################
         # train with real
         y = torch.full((iterator.batch_size,), 1, device=device)
-        losses[i][0] = loss_backward(models["D"], loss_fun, data, y)
+        l0 = loss_backward(models["D"], loss_fun, data, y)
 
         # train with fake
         z = torch.randn(iterator.batch_size, dim_z, device=device)
         x_tilde = models["G"](z)
-        losses[i][1] = loss_backward(models["D"], loss_fun, x_tilde.detach(), y.fill_(0))
-        extragradient_step(optimizer["D"], models["D"], i)
+        l1 = loss_backward(models["D"], loss_fun, x_tilde.detach(), y.fill_(0))
+        extragradient_step(optimizers["D"], models["D"], i)
 
         ############################
         # (2) Update G network: minimize -E[log(1 - D(G(z)))]
         ###########################
-        losses[i][2] = loss_backward(models["D"], loss_fun, x_tilde, y.fill_(1))
-        extragradient_step(optimizer["G"], models["G"], i)
+        l2 = loss_backward(models["D"], loss_fun, x_tilde, y.fill_(1))
+        extragradient_step(optimizers["G"], models["G"], i)
 
         if i % 50 == 0:
-            print("Loss {}: {}".format(i, losses[i]))
+            losses.append([l0.item(), l1.item(), l2.item()])
+            print("Loss {}: {}".format(i, losses[-1]))
 
-    return models, optimizers, losses
+    return models, optimizers, np.array(losses)
 
 
 def loss_backward(model, loss_fun, x, y):
@@ -47,5 +48,5 @@ def extragradient_step(optimizer, model, i):
     if i % 2 == 0:
         optimizer.extrapolate()
     else:
-        optimizers.step()
-        models.zero_grad()
+        optimizer.step()
+        model.zero_grad()
