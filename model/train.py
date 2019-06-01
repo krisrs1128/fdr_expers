@@ -13,7 +13,7 @@ def train(iterator, optimizers, models, loss_fun, device=None):
 
     for i, data in enumerate(iterator):
         ############################
-        # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
+        # (1) Update D network: minimize -(E[log(D(x))] + E[log(1 - D(G(z)))])
         ###########################
         # train with real
         y = torch.full((iterator.batch_size,), 1, device=device)
@@ -23,27 +23,16 @@ def train(iterator, optimizers, models, loss_fun, device=None):
         z = torch.randn(iterator.batch_size, dim_z, device=device)
         x_tilde = models["G"](z)
         losses[i][1] = loss_backward(models["D"], loss_fun, x_tilde.detach(), y.fill_(0))
-
-        if i % 2 == 0:
-            optimizers["D"].extrapolate()
-        else:
-            optimizers["D"].step()
-            models["D"].zero_grad()
+        extragradient_step(optimizer["D"], models["D"], i)
 
         ############################
-        # (2) Update G network: maximize log(D(G(z)))
+        # (2) Update G network: minimize -E[log(1 - D(G(z)))]
         ###########################
         losses[i][2] = loss_backward(models["D"], loss_fun, x_tilde, y.fill_(1))
+        extragradient_step(optimizer["G"], models["G"], i)
 
-        if i % 2 == 0:
-            optimizers["G"].extrapolate()
-        else:
-            optimizers["G"].step()
-            models["G"].zero_grad()
-
-
-        # if i % 0 == 0:
-        print("Loss {}: {}".format(i, losses[i]))
+        if i % 50 == 0:
+            print("Loss {}: {}".format(i, losses[i]))
 
     return models, optimizers, losses
 
@@ -53,3 +42,10 @@ def loss_backward(model, loss_fun, x, y):
     loss = loss_fun(y_hat.squeeze(), y)
     loss.backward()
     return loss
+
+def extragradient_step(optimizer, model, i):
+    if i % 2 == 0:
+        optimizer.extrapolate()
+    else:
+        optimizers.step()
+        models.zero_grad()
