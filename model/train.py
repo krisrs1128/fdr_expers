@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 import torch
 
-def train(iterator, optimizers, models, loss_fun, device=None):
-    if not device:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+def train(iterator, optimizers, models, loss_fun):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     dim_z = models["G"].layers[0].in_features
-    losses = []
 
     models["G"].zero_grad()
     models["D"].zero_grad()
 
+    losses = []
     for i, data in enumerate(iterator):
         ############################
         # (1) Update D network: minimize -(E[log(D(x))] + E[log(1 - D(G(z)))])
@@ -43,6 +41,7 @@ def loss_backward(model, loss_fun, x, y):
     loss = loss_fun(y_hat.squeeze(), y)
     loss.backward()
     return loss
+
 
 def extragradient_step(optimizer, model, i):
     if i % 2 == 0:
